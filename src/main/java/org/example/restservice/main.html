@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PersonsSite</title>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript">
+        var Person = {
+            "id":0,
+            "firstName": "Default",
+            "age":0,
+            "personStatus":"ACTIVE",
+            "eduLevel": "Brak"
+        }
+
+        function getJsonPerson(id) {
+            $.ajax({
+                url: "http://localhost:8080/persons/" + id,
+                method: "GET",
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+            })
+                .done(function(msg) {
+                    document.getElementById("bid").value = msg.id;
+                    document.getElementById("name").value = msg.firstName;
+                    document.getElementById("age").value = msg.age;
+                    document.getElementById("status").value = msg.personStatus;
+
+                    var eduLevelSelect = document.getElementById("personOptions");
+                    var eduLevel = msg.eduLevel;
+                    for (var i = 0; i < eduLevelSelect.options.length; i++) {
+                        if (eduLevelSelect.options[i].value === eduLevel) {
+                            eduLevelSelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+                })
+                .fail(function(errMsg) {
+                    alert(JSON.stringify(errMsg))
+                });
+        }
+
+        function listAllJsonPerson() {
+            $.ajax({
+                url: "http://localhost:8080/persons/",
+                method: "GET",
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+            })
+                .done(function(msg) {
+                    $("#personstable tbody").remove();
+                    $.each(msg._embedded.personList, function (index, person) {
+                        if($("#personstable tbody").length === 0) {
+                            $("#personstable").append("<tbody></tbody>");
+                        }
+                        var operations = [];
+                        operations.push('<button onclick="getJsonPerson(' + person.id + ')">Details</button>');
+                        if (person._links.delete) {
+                            operations.push('<button onclick="deleteJsonPerson(' + person.id + ')">Delete</button>');
+                        }
+                        if (person._links.hire) {
+                            operations.push('<button onclick="hirePerson(' + person.id + ')">Hire</button>');
+                        }
+                        if (person._links.deactivate) {
+                            operations.push('<button onclick="deactivatePerson(' + person.id + ')">Deactivate</button>');
+                        }
+                        if (person._links.activate) {
+                            operations.push('<button onclick="activatePerson(' + person.id + ')">Activate</button>');
+                        }
+                        if (person._links.vacate) {
+                            operations.push('<button onclick="vacatePerson(' + person.id + ')">Vacate</button>');
+                        }
+                        $("#personstable tbody").append("<tr>"+
+                            "<td>"+ person.id +"</td>"+
+                            "<td>"+ person.firstName +"</td>"+
+                            "<td>"+ person.personStatus +"</td>"+
+                            "<td>"+ operations.join(' ') +"</td>"+
+                            "</tr>");
+                    });
+                    resetForm()
+                })
+                .fail(function(errMsg) {
+                    alert(JSON.stringify(errMsg))
+                });
+        }
+
+        function addJsonPerson() {
+            var person = Person;
+            person.id = $("#bid").val();
+            person.firstName = $("#name").val();
+            person.age = $("#age").val();
+            person.personStatus = "ACTIVE";
+            person.eduLevel = $("#personOptions").val();
+
+            $.ajax({
+                url: "http://localhost:8080/persons/",
+                method: "POST",
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(person)
+            })
+                .done(function(msg) {
+                    alert('Added -> list data');
+                    listAllJsonPerson();
+                    resetForm();
+                })
+                .fail(function(errMsg) {
+                    alert(JSON.stringify(errMsg))
+                });
+        }
+
+        function updateJsonPerson() {
+            var person = Person;
+            person.id = $("#bid").val();
+            person.firstName = $("#name").val();
+            person.age = $("#age").val();
+            person.eduLevel = $("#personOptions").val();
+
+            $.ajax({
+                url: "http://localhost:8080/persons/",
+                method: "PUT",
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(person)
+            })
+                .done(function(msg) {
+                    alert('Updated -> list data');
+                    listAllJsonPerson();
+                })
+                .fail(function(errMsg) {
+                    alert(JSON.stringify(errMsg))
+                });
+        }
+
+        function deleteJsonPerson(id) {
+            $.ajax({
+                url: "http://localhost:8080/persons/" + id,
+                method: "DELETE",
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+            })
+                .done(function(msg) {
+                    alert('Deleted -> list data');
+                    listAllJsonPerson();
+                    resetForm()
+                })
+                .fail(function(errMsg) {
+                    alert(JSON.stringify(errMsg))
+                });
+        }
+
+        function activatePerson(id) {
+            $.ajax({
+                url: "http://localhost:8080/persons/" + id +"/activate",
+                method: "PATCH",
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+            })
+                .done(function(msg) {
+                    alert('Activated -> list data');
+                    listAllJsonPerson();
+                    getJsonPerson(id)
+                })
+                .fail(function(errMsg) {
+                    alert(JSON.stringify(errMsg))
+                });
+        }
+        function deactivatePerson(id) {
+            $.ajax({
+                url: "http://localhost:8080/persons/" + id +"/deactivate",
+                method: "PATCH",
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+            })
+                .done(function(msg) {
+                    alert('Deactivated -> list data');
+                    listAllJsonPerson();
+                    getJsonPerson(id)
+                })
+                .fail(function(errMsg) {
+                    alert(JSON.stringify(errMsg))
+                });
+        }
+        function hirePerson(id) {
+            $.ajax({
+                url: "http://localhost:8080/persons/" + id +"/hire",
+                method: "PATCH",
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+            })
+                .done(function(msg) {
+                    alert('Hired -> list data');
+                    listAllJsonPerson();
+                    getJsonPerson(id)
+                })
+                .fail(function(errMsg) {
+                    alert(JSON.stringify(errMsg))
+                });
+        }
+        function vacatePerson(id) {
+            $.ajax({
+                url: "http://localhost:8080/persons/" + id +"/vacate",
+                method: "PATCH",
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+            })
+                .done(function(msg) {
+                    alert('Vacated -> list data');
+                    listAllJsonPerson();
+                    getJsonPerson(id)
+                })
+                .fail(function(errMsg) {
+                    alert(JSON.stringify(errMsg))
+                });
+        }
+
+        function resetForm() {
+            $("#bid").val('');
+            $("#name").val('');
+            $("#age").val('');
+            $("#status").val('');
+            $("#personOptions").val('Brak');
+        }
+    </script>
+    <style>
+        #personstable {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        #personstable th, #personstable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        #personstable th {
+            background-color: #f2f2f2;
+        }
+
+        #personstable tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        #personstable tr:hover {
+            background-color: #ddd;
+        }
+    </style>
+</head>
+<body>
+<h2 style="margin-top:50px; margin-bottom:8px;">Operations</h2>
+<form>
+    <table id="personoperation" cellpadding="1">
+        <tr>
+            <td>ID</td>
+            <td>Name</td>
+            <td>Age</td>
+            <td>Status</td>
+            <td>Operations:</td>
+        </tr>
+        <tr>
+            <td><input id="bid" type="text"/></td>
+            <td><input id="name" type="text"/></td>
+            <td><input id="age" type="text"/></td>
+            <td><input id="status" type="text" readonly="true"/></td>
+            <td>
+                <button type="button" id="add" onclick="addJsonPerson()">Add New</button>
+                <button type="button" id="update" onclick="updateJsonPerson()">Update</button>
+                <button type="button" id="listall" onclick="listAllJsonPerson()">List All</button>
+            </td>
+        </tr>
+    </table>
+    <td>
+        <label for="personOptions">Wykształcenie:</label>
+        <select id="personOptions">
+            <option value="Brak">Brak</option>
+            <option value="Podstawowe">Podstawowe</option>
+            <option value="Średnie">Średnie</option>
+            <option value="Licencjat">Licencjat</option>
+            <option value="Magister">Magister</option>
+            <option value="Doktor">Doktor</option>
+        </select>
+    </td>
+</form>
+<br/>
+<h2 style="margin-top:50px; margin-bottom:50px;">Persons</h2>
+<table id="personstable" cellpadding="1">
+    <thead>
+    <tr>
+        <th>Person ID</th>
+        <th>Name</th>
+        <th>Person Status</th>
+        <th>Operations</th>
+    </tr>
+    </thead>
+
+</table>
+</body>
+</html>
